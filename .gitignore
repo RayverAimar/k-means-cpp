@@ -35,9 +35,15 @@ client
 server
 kmeans
 benchmark
+results.csv
+centroids.csv
+benchmark.csv
+clusters.png
+benchmark.png
 
 # Text files
 *.txt
+!requirements.txt
 *.html
 *.css
 *.js

@@ -1,6 +1,7 @@
 #include "kmeans.h"
 
 #include <chrono>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <random>
@@ -43,6 +44,9 @@ int main() {
               << "\n"
               << std::string(52, '-') << "\n";
 
+    std::ofstream csv("benchmark.csv");
+    csv << "n,k,iters,converged,time_ms\n";
+
     for (int k : ks) {
         for (int n : sizes) {
             auto pts = generate_points(n, k);
@@ -61,9 +65,15 @@ int main() {
                       << std::fixed << std::setprecision(2)
                       << std::setw(14) << ms
                       << "\n";
+
+            csv << n << "," << k << "," << iters << ","
+                << (converged ? 1 : 0) << ","
+                << std::fixed << std::setprecision(2) << ms << "\n";
         }
         std::cout << "\n";
     }
+
+    std::cout << "Exported benchmark.csv — run `python plot_benchmark.py` to visualize.\n";
 
     return 0;
 }

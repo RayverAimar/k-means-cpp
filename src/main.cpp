@@ -57,5 +57,20 @@ int main() {
               << "  |  Iterations: " << iters
               << "  |  Time: " << ms << " us\n";
 
+    // Export results for plotting
+    std::ofstream pts_out("results.csv");
+    pts_out << "sepal_length,sepal_width,petal_length,petal_width,cluster,label\n";
+    for (const auto& p : dataset)
+        pts_out << p.f0 << "," << p.f1 << "," << p.f2 << "," << p.f3
+                << "," << p.cluster << "," << p.label << "\n";
+
+    std::ofstream cen_out("centroids.csv");
+    cen_out << "cluster,sepal_length,sepal_width,petal_length,petal_width\n";
+    for (int i = 0; i < (int)centroids.size(); i++)
+        cen_out << i << "," << centroids[i].f0 << "," << centroids[i].f1
+                << "," << centroids[i].f2 << "," << centroids[i].f3 << "\n";
+
+    std::cout << "Exported results.csv and centroids.csv — run `python plot.py` to visualize.\n";
+
     return 0;
 }

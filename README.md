@@ -1,34 +1,50 @@
 # KMeans (C++)
 
-A from-scratch K-Means clustering implementation in C++17 with no external dependencies. Ships with two executables: a demo that clusters the [Iris dataset](https://archive.ics.uci.edu/ml/machine-learning-databases/iris/) and a benchmark that measures wall-clock time on synthetic data up to 1 million points.
+A from-scratch K-Means clustering implementation in C++17 with no external dependencies. Ships with two executables — a demo that clusters the [Iris dataset](https://archive.ics.uci.edu/ml/machine-learning-databases/iris/) and a benchmark that measures wall-clock time on synthetic data up to 1 million points — plus Python scripts for visualization.
 
 ## Quickstart
+
+### C++ (build and run)
 
 ```bash
 git clone https://github.com/RayverAimar/k-means-cpp.git
 cd k-means-cpp
-make          # builds ./kmeans and ./benchmark
-./kmeans      # Iris demo
-./benchmark   # timing table
+make            # builds ./kmeans and ./benchmark
+./kmeans        # Iris demo → exports results.csv + centroids.csv
+./benchmark     # timing table → exports benchmark.csv
 ```
 
-Requires a C++17-capable compiler (`g++` or `clang++`). No external libraries needed.
+Requires a C++17-capable compiler (`g++` or `clang++`). No external C++ libraries needed.
+
+### Python (visualize)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+python plot.py            # reads results.csv → saves clusters.png
+python plot_benchmark.py  # reads benchmark.csv → saves benchmark.png
+```
+
+Run `./kmeans` and `./benchmark` first — the Python scripts read the CSVs they export.
 
 ## Demo
 
-`./kmeans` clusters 150 Iris samples into 3 groups and reports convergence stats:
+`./kmeans` clusters 150 Iris samples into 3 groups, reports convergence stats, and exports CSVs:
 
 ```
-CLUSTER [0]
-0 -> (7, 3.2) (4.7, 1.4) Iris-versicolor
-...
-
 CENTROID [0]: (6.85384, 3.07692) (5.71538, 2.05385)
 CENTROID [1]: (5.88361, 2.74098) (4.38853, 1.43443)
 CENTROID [2]: (5.006, 3.418) (1.464, 0.244)
 
 Converged: yes  |  Iterations: 11  |  Time: 54 us
+Exported results.csv and centroids.csv — run `python plot.py` to visualize.
 ```
+
+`plot.py` produces a side-by-side scatter of the sepal and petal feature spaces, colored by cluster with centroids marked:
+
+![clusters](clusters.png)
 
 ## Benchmark
 
@@ -46,7 +62,11 @@ N           K     Iters     Converged Time (ms)
 1000000     10    100       no        7108.41
 ```
 
-The naive initialization (first K points as centroids) struggles to converge on large random datasets within 100 iterations — at this scale, k-means++ initialization would converge faster and more reliably.
+`plot_benchmark.py` produces a log-scale N vs time plot with one line per K value:
+
+![benchmark](benchmark.png)
+
+Non-convergence at large N is expected — naive initialization (first K points as centroids) struggles at scale. k-means++ initialization would converge faster and more reliably.
 
 ## How it works
 
@@ -61,23 +81,25 @@ Time complexity per iteration: `O(N × K)`. Total: `O(N × K × iters)`.
 
 ```
 src/
-  point.h        — Point struct (4 features, Euclidean distance)
-  kmeans.h       — KMeansResult struct + function declaration
-  kmeans.cpp     — algorithm implementation
-  main.cpp       — Iris dataset demo with timing
-  benchmark.cpp  — synthetic data generator + timing table
+  point.h           — Point struct (4 features, Euclidean distance)
+  kmeans.h/cpp      — algorithm implementation, returns {centroids, iterations, converged}
+  main.cpp          — Iris demo with timing + CSV export
+  benchmark.cpp     — synthetic data generator + timing table + CSV export
 dataset/
-  iris.data      — UCI Iris dataset (150 samples)
+  iris.data         — UCI Iris dataset (150 samples)
+plot.py             — cluster scatter plot (sepal + petal spaces)
+plot_benchmark.py   — N vs time scaling plot
+requirements.txt    — matplotlib
 Makefile
 ```
 
 ## Parameters
 
-| Parameter   | Default | Description                               |
-|-------------|---------|-------------------------------------------|
-| `k`         | `3`     | Number of clusters                        |
-| `max_iters` | `300`   | Maximum iterations (benchmark uses `100`) |
-| `KMEANS_TOL`| `1e-6`  | Convergence threshold (centroid movement) |
+| Parameter    | Default | Description                               |
+|--------------|---------|-------------------------------------------|
+| `k`          | `3`     | Number of clusters                        |
+| `max_iters`  | `300`   | Maximum iterations (benchmark uses `100`) |
+| `KMEANS_TOL` | `1e-6`  | Convergence threshold (centroid movement) |
 
 Modify these in `src/kmeans.h` and `src/benchmark.cpp`.
 
