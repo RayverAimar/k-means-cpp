@@ -33,6 +33,8 @@
 
 client
 server
+kmeans
+benchmark
 
 # Text files
 *.txt
