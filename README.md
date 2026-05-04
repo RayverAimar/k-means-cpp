@@ -1,6 +1,6 @@
 # KMeans (C++)
 
-A from-scratch K-Means clustering implementation in C++17 with no external dependencies. Ships with two executables — a demo that clusters the [Iris dataset](https://archive.ics.uci.edu/ml/machine-learning-databases/iris/) and a benchmark that measures wall-clock time on synthetic data up to 1 million points — plus Python scripts for visualization.
+A from-scratch K-Means clustering implementation in C++17 with no external dependencies. The algorithm is dataset-agnostic — it operates on any number of features. Ships with two demos (Iris and Wine datasets), a scaling benchmark, and a generic Python plotting script.
 
 ## Quickstart
 
@@ -10,8 +10,8 @@ A from-scratch K-Means clustering implementation in C++17 with no external depen
 git clone https://github.com/RayverAimar/k-means-cpp.git
 cd k-means-cpp
 make            # builds ./kmeans and ./benchmark
-./kmeans        # Iris demo → exports results.csv + centroids.csv
-./benchmark     # timing table → exports benchmark.csv
+./kmeans        # Iris + Wine demo → exports CSV files
+./benchmark     # scaling table → exports benchmark.csv
 ```
 
 Requires a C++17-capable compiler (`g++` or `clang++`). No external C++ libraries needed.
@@ -23,28 +23,29 @@ python3 -m venv .venv
 source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-python plot.py            # reads results.csv → saves clusters.png
-python plot_benchmark.py  # reads benchmark.csv → saves benchmark.png
+# Iris — default features (f0 vs f1, f2 vs f3)
+python plot.py iris_results.csv iris_centroids.csv clusters_iris.png
+
+# Wine — pick informative feature pairs (Alcohol/Flavanoids, Color intensity/Proline)
+python plot.py wine_results.csv wine_centroids.csv clusters_wine.png 0 6 9 12
+
+# Benchmark scaling chart
+python plot_benchmark.py
 ```
 
 Run `./kmeans` and `./benchmark` first — the Python scripts read the CSVs they export.
 
-## Demo
+## Iris demo
 
-`./kmeans` clusters 150 Iris samples into 3 groups, reports convergence stats, and exports CSVs:
+150 samples · 4 features · K=3 · converges in 11 iterations
 
-```
-CENTROID [0]: (6.85384, 3.07692) (5.71538, 2.05385)
-CENTROID [1]: (5.88361, 2.74098) (4.38853, 1.43443)
-CENTROID [2]: (5.006, 3.418) (1.464, 0.244)
+![clusters_iris](clusters_iris.png)
 
-Converged: yes  |  Iterations: 11  |  Time: 54 us
-Exported results.csv and centroids.csv — run `python plot.py` to visualize.
-```
+## Wine demo
 
-`plot.py` produces a side-by-side scatter of the sepal and petal feature spaces, colored by cluster with centroids marked:
+178 samples · 13 features · K=3 · converges in 12 iterations · from the [UCI ML Repository](https://archive.ics.uci.edu/ml/machine-learning-databases/wine/)
 
-![clusters](clusters.png)
+![clusters_wine](clusters_wine.png)
 
 ## Benchmark
 
@@ -62,8 +63,6 @@ N           K     Iters     Converged Time (ms)
 1000000     10    100       no        7108.41
 ```
 
-`plot_benchmark.py` produces a log-scale N vs time plot with one line per K value:
-
 ![benchmark](benchmark.png)
 
 Non-convergence at large N is expected — naive initialization (first K points as centroids) struggles at scale. k-means++ initialization would converge faster and more reliably.
@@ -71,24 +70,35 @@ Non-convergence at large N is expected — naive initialization (first K points 
 ## How it works
 
 1. **Initialize** — use the first K points in the dataset as initial centroids
-2. **Assign** — assign each point to the nearest centroid (Euclidean distance over all 4 features)
+2. **Assign** — assign each point to the nearest centroid (Euclidean distance over all features)
 3. **Update** — move each centroid to the mean of its assigned points
 4. **Repeat** until convergence (`tol=1e-6`) or `max_iters`
 
-Time complexity per iteration: `O(N × K)`. Total: `O(N × K × iters)`.
+Time complexity per iteration: `O(N × K × D)` where D is the number of features. Total: `O(N × K × D × iters)`.
+
+## Plotting
+
+`plot.py` is dataset-agnostic — it reads any CSV exported by `./kmeans` and plots two feature-pair views side by side:
+
+```
+python plot.py <results.csv> <centroids.csv> [out.png] [xi] [yi] [xj] [yj]
+```
+
+Feature indices `xi yi xj yj` default to `0 1 2 3`. For datasets with many features, pick the most discriminating pair manually.
 
 ## File structure
 
 ```
 src/
-  point.h           — Point struct (4 features, Euclidean distance)
-  kmeans.h/cpp      — algorithm implementation, returns {centroids, iterations, converged}
-  main.cpp          — Iris demo with timing + CSV export
+  point.h           — Point struct (n-dimensional, Euclidean distance)
+  kmeans.h/cpp      — algorithm, returns {centroids, iterations, converged}
+  main.cpp          — Iris + Wine demo with timing and CSV export
   benchmark.cpp     — synthetic data generator + timing table + CSV export
 dataset/
-  iris.data         — UCI Iris dataset (150 samples)
-plot.py             — cluster scatter plot (sepal + petal spaces)
-plot_benchmark.py   — N vs time scaling plot
+  iris.data         — UCI Iris dataset (150 samples, 4 features)
+  wine.data         — UCI Wine dataset (178 samples, 13 features)
+plot.py             — generic cluster scatter plot (any dataset)
+plot_benchmark.py   — N vs time scaling chart
 requirements.txt    — matplotlib
 Makefile
 ```

@@ -7,14 +7,13 @@
 #include <random>
 #include <vector>
 
-// Generates N points drawn from K isotropic Gaussian clusters in 4D space.
-std::vector<Point> generate_points(int n, int k, unsigned seed = 42) {
+// Generates N points drawn from K isotropic Gaussian clusters in `dim`-dimensional space.
+std::vector<Point> generate_points(int n, int k, int dim = 4, unsigned seed = 42) {
     std::mt19937 rng(seed);
     std::uniform_real_distribution<float> center_dist(0.0f, 20.0f);
     std::normal_distribution<float> noise(0.0f, 1.0f);
 
-    // Pick K random cluster centers
-    std::vector<std::array<float, 4>> centers(k);
+    std::vector<std::vector<float>> centers(k, std::vector<float>(dim));
     for (auto& c : centers)
         for (auto& v : c) v = center_dist(rng);
 
@@ -23,8 +22,9 @@ std::vector<Point> generate_points(int n, int k, unsigned seed = 42) {
     std::uniform_int_distribution<int> which(0, k - 1);
     for (int i = 0; i < n; i++) {
         auto& c = centers[which(rng)];
-        pts.emplace_back(c[0] + noise(rng), c[1] + noise(rng),
-                         c[2] + noise(rng), c[3] + noise(rng));
+        std::vector<float> f(dim);
+        for (int d = 0; d < dim; d++) f[d] = c[d] + noise(rng);
+        pts.emplace_back(f);
     }
     return pts;
 }
@@ -32,8 +32,8 @@ std::vector<Point> generate_points(int n, int k, unsigned seed = 42) {
 int main() {
     const int MAX_ITERS = 100;
 
-    std::vector<int> sizes  = {10'000, 100'000, 1'000'000};
-    std::vector<int> ks     = {3, 10};
+    std::vector<int> sizes = {10'000, 100'000, 1'000'000};
+    std::vector<int> ks    = {3, 10};
 
     std::cout << std::left
               << std::setw(12) << "N"
@@ -41,8 +41,7 @@ int main() {
               << std::setw(10) << "Iters"
               << std::setw(10) << "Converged"
               << std::setw(14) << "Time (ms)"
-              << "\n"
-              << std::string(52, '-') << "\n";
+              << "\n" << std::string(52, '-') << "\n";
 
     std::ofstream csv("benchmark.csv");
     csv << "n,k,iters,converged,time_ms\n";
@@ -63,8 +62,7 @@ int main() {
                       << std::setw(10) << iters
                       << std::setw(10) << (converged ? "yes" : "no")
                       << std::fixed << std::setprecision(2)
-                      << std::setw(14) << ms
-                      << "\n";
+                      << std::setw(14) << ms << "\n";
 
             csv << n << "," << k << "," << iters << ","
                 << (converged ? 1 : 0) << ","
@@ -74,6 +72,5 @@ int main() {
     }
 
     std::cout << "Exported benchmark.csv — run `python plot_benchmark.py` to visualize.\n";
-
     return 0;
 }

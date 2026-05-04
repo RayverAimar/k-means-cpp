@@ -3,7 +3,7 @@
 #include "point.h"
 #include <vector>
 
-static constexpr double KMEANS_TOL = 1e-6;
+constexpr double KMEANS_TOL = 1e-6;
 
 struct KMeansResult {
     std::vector<Point> centroids;

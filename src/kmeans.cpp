@@ -4,6 +4,8 @@
 #include <vector>
 
 KMeansResult kmeans(std::vector<Point>& points, int k, int max_iters) {
+    int dim = (int)points[0].features.size();
+
     std::vector<Point> centroids(points.begin(), points.begin() + k);
     for (auto& c : centroids) c.label = "";
 
@@ -25,21 +27,18 @@ KMeansResult kmeans(std::vector<Point>& points, int k, int max_iters) {
 
         // Update: move centroid to mean of assigned points
         std::vector<Point> next(k);
+        for (auto& c : next) c.features.assign(dim, 0.0f);
         std::vector<int> counts(k, 0);
+
         for (const auto& p : points) {
-            next[p.cluster].f0 += p.f0;
-            next[p.cluster].f1 += p.f1;
-            next[p.cluster].f2 += p.f2;
-            next[p.cluster].f3 += p.f3;
+            for (int d = 0; d < dim; d++)
+                next[p.cluster].features[d] += p.features[d];
             counts[p.cluster]++;
         }
         for (int j = 0; j < k; j++) {
-            if (counts[j] > 0) {
-                next[j].f0 /= counts[j];
-                next[j].f1 /= counts[j];
-                next[j].f2 /= counts[j];
-                next[j].f3 /= counts[j];
-            }
+            if (counts[j] > 0)
+                for (int d = 0; d < dim; d++)
+                    next[j].features[d] /= counts[j];
         }
 
         // Convergence: stop when no centroid moves more than TOL
